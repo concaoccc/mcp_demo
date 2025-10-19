@@ -25,7 +25,7 @@ class Auth:
         """
         self.api_key = api_key or os.environ.get("MCP_API_KEY")
         
-    def validate_key(self, provided_key: str) -> bool:
+    def validate_key(self, provided_key: Optional[str]) -> bool:
         """
         Validate an API key.
         
@@ -53,7 +53,11 @@ class Auth:
         """
         @wraps(func)
         def wrapper(*args, **kwargs):
-            api_key = kwargs.get('api_key') or os.environ.get("MCP_API_KEY")
+            # If no API key is configured, allow access
+            if not self.api_key:
+                return func(*args, **kwargs)
+            
+            api_key = kwargs.get('api_key')
             
             if not self.validate_key(api_key):
                 raise AuthenticationError("Invalid or missing API key")

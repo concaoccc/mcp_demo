@@ -61,7 +61,7 @@ class MCPServerWithAuth:
                 Tool execution result
             """
             # Extract and validate API key
-            api_key = arguments.get("api_key", "")
+            api_key = arguments.get("api_key")
             
             if not self.auth.validate_key(api_key):
                 raise AuthenticationError("Invalid or missing API key")
