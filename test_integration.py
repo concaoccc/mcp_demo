@@ -14,12 +14,6 @@ from auth import AuthManager
 import server
 
 
-def setup_auth(enabled: bool, api_key: str = ""):
-    """Helper function to configure authentication for tests."""
-    with patch.dict(os.environ, {"AUTH_ENABLED": str(enabled).lower(), "API_KEY": api_key}):
-        return AuthManager()
-
-
 async def test_list_tools():
     """Test that tools are listed correctly."""
     tools = await server.list_tools()
