@@ -6,12 +6,18 @@ This test validates the complete server functionality.
 import os
 import sys
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import patch
 from mcp.types import TextContent
 
 # Import server components
 from auth import AuthManager
 import server
+
+
+def setup_auth(enabled: bool, api_key: str = ""):
+    """Helper function to configure authentication for tests."""
+    with patch.dict(os.environ, {"AUTH_ENABLED": str(enabled).lower(), "API_KEY": api_key}):
+        return AuthManager()
 
 
 async def test_list_tools():
@@ -29,126 +35,114 @@ async def test_list_tools():
 
 async def test_call_tool_echo_without_auth():
     """Test echo tool without authentication (auth disabled)."""
-    # Set up environment for no auth
-    os.environ["AUTH_ENABLED"] = "false"
-    os.environ["API_KEY"] = ""
-    
-    # Recreate auth manager with new settings
-    server.auth_manager = AuthManager()
-    
-    # Test echo without API key
-    result = await server.call_tool("echo", {"message": "Hello World"})
-    
-    assert len(result) == 1
-    assert isinstance(result[0], TextContent)
-    assert result[0].text == "Echo: Hello World"
+    # Use patch.dict to safely modify environment
+    with patch.dict(os.environ, {"AUTH_ENABLED": "false", "API_KEY": ""}):
+        # Recreate auth manager with new settings
+        server.auth_manager = AuthManager()
+        
+        # Test echo without API key
+        result = await server.call_tool("echo", {"message": "Hello World"})
+        
+        assert len(result) == 1
+        assert isinstance(result[0], TextContent)
+        assert result[0].text == "Echo: Hello World"
     
     print("✓ test_call_tool_echo_without_auth passed")
 
 
 async def test_call_tool_echo_with_auth_valid():
     """Test echo tool with valid authentication."""
-    # Set up environment for auth
-    os.environ["AUTH_ENABLED"] = "true"
-    os.environ["API_KEY"] = "test-key-123"
-    
-    # Recreate auth manager with new settings
-    server.auth_manager = AuthManager()
-    
-    # Test echo with valid API key
-    result = await server.call_tool("echo", {
-        "message": "Authenticated Hello",
-        "api_key": "test-key-123"
-    })
-    
-    assert len(result) == 1
-    assert isinstance(result[0], TextContent)
-    assert result[0].text == "Echo: Authenticated Hello"
+    # Use patch.dict to safely modify environment
+    with patch.dict(os.environ, {"AUTH_ENABLED": "true", "API_KEY": "test-key-123"}):
+        # Recreate auth manager with new settings
+        server.auth_manager = AuthManager()
+        
+        # Test echo with valid API key
+        result = await server.call_tool("echo", {
+            "message": "Authenticated Hello",
+            "api_key": "test-key-123"
+        })
+        
+        assert len(result) == 1
+        assert isinstance(result[0], TextContent)
+        assert result[0].text == "Echo: Authenticated Hello"
     
     print("✓ test_call_tool_echo_with_auth_valid passed")
 
 
 async def test_call_tool_echo_with_auth_invalid():
     """Test echo tool with invalid authentication."""
-    # Set up environment for auth
-    os.environ["AUTH_ENABLED"] = "true"
-    os.environ["API_KEY"] = "correct-key"
-    
-    # Recreate auth manager with new settings
-    server.auth_manager = AuthManager()
-    
-    # Test echo with invalid API key
-    result = await server.call_tool("echo", {
-        "message": "This should fail",
-        "api_key": "wrong-key"
-    })
-    
-    assert len(result) == 1
-    assert isinstance(result[0], TextContent)
-    assert "Authentication failed" in result[0].text
+    # Use patch.dict to safely modify environment
+    with patch.dict(os.environ, {"AUTH_ENABLED": "true", "API_KEY": "correct-key"}):
+        # Recreate auth manager with new settings
+        server.auth_manager = AuthManager()
+        
+        # Test echo with invalid API key
+        result = await server.call_tool("echo", {
+            "message": "This should fail",
+            "api_key": "wrong-key"
+        })
+        
+        assert len(result) == 1
+        assert isinstance(result[0], TextContent)
+        assert "Authentication failed" in result[0].text
     
     print("✓ test_call_tool_echo_with_auth_invalid passed")
 
 
 async def test_call_tool_echo_with_auth_missing():
     """Test echo tool with missing authentication."""
-    # Set up environment for auth
-    os.environ["AUTH_ENABLED"] = "true"
-    os.environ["API_KEY"] = "required-key"
-    
-    # Recreate auth manager with new settings
-    server.auth_manager = AuthManager()
-    
-    # Test echo without API key when auth is required
-    result = await server.call_tool("echo", {
-        "message": "This should fail"
-    })
-    
-    assert len(result) == 1
-    assert isinstance(result[0], TextContent)
-    assert "Authentication failed" in result[0].text
+    # Use patch.dict to safely modify environment
+    with patch.dict(os.environ, {"AUTH_ENABLED": "true", "API_KEY": "required-key"}):
+        # Recreate auth manager with new settings
+        server.auth_manager = AuthManager()
+        
+        # Test echo without API key when auth is required
+        result = await server.call_tool("echo", {
+            "message": "This should fail"
+        })
+        
+        assert len(result) == 1
+        assert isinstance(result[0], TextContent)
+        assert "Authentication failed" in result[0].text
     
     print("✓ test_call_tool_echo_with_auth_missing passed")
 
 
 async def test_call_tool_get_server_info():
     """Test get_server_info tool."""
-    # Set up environment for auth
-    os.environ["AUTH_ENABLED"] = "true"
-    os.environ["API_KEY"] = "info-key"
-    
-    # Recreate auth manager with new settings
-    server.auth_manager = AuthManager()
-    
-    # Test with valid auth
-    result = await server.call_tool("get_server_info", {
-        "api_key": "info-key"
-    })
-    
-    assert len(result) == 1
-    assert isinstance(result[0], TextContent)
-    assert "MCP Demo Server" in result[0].text
-    assert "Authentication: enabled" in result[0].text
-    assert "Version: 1.0.0" in result[0].text
+    # Use patch.dict to safely modify environment
+    with patch.dict(os.environ, {"AUTH_ENABLED": "true", "API_KEY": "info-key"}):
+        # Recreate auth manager with new settings
+        server.auth_manager = AuthManager()
+        
+        # Test with valid auth
+        result = await server.call_tool("get_server_info", {
+            "api_key": "info-key"
+        })
+        
+        assert len(result) == 1
+        assert isinstance(result[0], TextContent)
+        assert "MCP Demo Server" in result[0].text
+        assert "Authentication: enabled" in result[0].text
+        assert "Version: 1.0.0" in result[0].text
     
     print("✓ test_call_tool_get_server_info passed")
 
 
 async def test_call_tool_unknown():
     """Test calling an unknown tool."""
-    # Set up environment without auth for simplicity
-    os.environ["AUTH_ENABLED"] = "false"
-    os.environ["API_KEY"] = ""
-    
-    # Recreate auth manager with new settings
-    server.auth_manager = AuthManager()
-    
-    # Test unknown tool
-    result = await server.call_tool("nonexistent_tool", {})
-    
-    assert len(result) == 1
-    assert isinstance(result[0], TextContent)
-    assert "Unknown tool" in result[0].text
+    # Use patch.dict to safely modify environment
+    with patch.dict(os.environ, {"AUTH_ENABLED": "false", "API_KEY": ""}):
+        # Recreate auth manager with new settings
+        server.auth_manager = AuthManager()
+        
+        # Test unknown tool
+        result = await server.call_tool("nonexistent_tool", {})
+        
+        assert len(result) == 1
+        assert isinstance(result[0], TextContent)
+        assert "Unknown tool" in result[0].text
     
     print("✓ test_call_tool_unknown passed")
 
