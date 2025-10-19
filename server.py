@@ -60,7 +60,9 @@ class MCPServerWithAuth:
             Returns:
                 Tool execution result
             """
-            # Extract and validate API key
+            # Extract API key (None if not provided)
+            # None is intentionally passed to auth.validate_key() to indicate
+            # no API key was provided, which allows optional authentication
             api_key = arguments.get("api_key")
             
             if not self.auth.validate_key(api_key):
